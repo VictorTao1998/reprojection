@@ -158,8 +158,10 @@ class MessytableDataset(Dataset):
         img_R_no_ir = np.array(Image.open(self.img_R_no_ir[idx]).convert(mode='L')) / 255
         # img_L_ir_pattern = __get_ir_pattern__(img_L, img_L_no_ir)  # [H, W]
         # img_R_ir_pattern = __get_ir_pattern__(img_R, img_R_no_ir)
-        img_L_ir_pattern = __get_smoothed_ir_pattern2__(img_L, img_L_no_ir)  # [H, W]
-        img_R_ir_pattern = __get_smoothed_ir_pattern2__(img_R, img_R_no_ir)
+        img_L_ir_pattern1 = __get_smoothed_ir_pattern__(img_L, img_L_no_ir)  # [H, W]
+        img_R_ir_pattern1 = __get_smoothed_ir_pattern__(img_R, img_R_no_ir)
+        img_L_ir_pattern2 = __get_smoothed_ir_pattern2__(img_L, img_L_no_ir)  # [H, W]
+        img_R_ir_pattern2 = __get_smoothed_ir_pattern2__(img_R, img_R_no_ir)
         img_L_rgb = np.repeat(img_L[:, :, None], 3, axis=-1)
         img_R_rgb = np.repeat(img_R[:, :, None], 3, axis=-1)
 
@@ -189,8 +191,12 @@ class MessytableDataset(Dataset):
         # img_real_R = __gamma_trans__(np.array(img_real_R), 0.5)
         # img_real_L_ir_pattern = __get_ir_pattern__(img_real_L, img_real_L_no_ir, threshold=0.02)  # [H, W]
         # img_real_R_ir_pattern = __get_ir_pattern__(img_real_R, img_real_R_no_ir, threshold=0.02)  # [H, W]
-        img_real_L_ir_pattern = __get_smoothed_ir_pattern2__(img_real_L, img_real_L_no_ir)  # [H, W]
-        img_real_R_ir_pattern = __get_smoothed_ir_pattern2__(img_real_R, img_real_R_no_ir)  # [H, W]
+
+        img_real_L_ir_pattern1 = __get_smoothed_ir_pattern__(img_real_L, img_real_L_no_ir)  # [H, W]
+        img_real_R_ir_pattern1 = __get_smoothed_ir_pattern__(img_real_R, img_real_R_no_ir)  # [H, W]
+        img_real_L_ir_pattern2 = __get_smoothed_ir_pattern2__(img_real_L, img_real_L_no_ir)  # [H, W]
+        img_real_R_ir_pattern2 = __get_smoothed_ir_pattern2__(img_real_R, img_real_R_no_ir)  # [H, W]
+
         img_real_L = np.repeat(img_real_L[:, :, None], 3, axis=-1)
         img_real_R = np.repeat(img_real_R[:, :, None], 3, axis=-1)
 
@@ -215,16 +221,20 @@ class MessytableDataset(Dataset):
         y = random.randint(0, w - tw)
         img_L_rgb = img_L_rgb[x:(x + th), y:(y + tw)]
         img_R_rgb = img_R_rgb[x:(x + th), y:(y + tw)]
-        img_L_ir_pattern = img_L_ir_pattern[x:(x + th), y:(y + tw)]
-        img_R_ir_pattern = img_R_ir_pattern[x:(x + th), y:(y + tw)]
+        img_L_ir_pattern1 = img_L_ir_pattern1[x:(x + th), y:(y + tw)]
+        img_R_ir_pattern1 = img_R_ir_pattern1[x:(x + th), y:(y + tw)]
+        img_L_ir_pattern2 = img_L_ir_pattern2[x:(x + th), y:(y + tw)]
+        img_R_ir_pattern2 = img_R_ir_pattern2[x:(x + th), y:(y + tw)]
         img_disp_l = img_disp_l[2 * x: 2 * (x + th), 2 * y: 2 * (y + tw)]  # depth original res in 1080*1920
         img_depth_l = img_depth_l[2 * x: 2 * (x + th), 2 * y: 2 * (y + tw)]
         img_disp_r = img_disp_r[2 * x: 2 * (x + th), 2 * y: 2 * (y + tw)]
         img_depth_r = img_depth_r[2 * x: 2 * (x + th), 2 * y: 2 * (y + tw)]
         img_real_L = img_real_L[x:(x + th), y:(y + tw)]
         img_real_R = img_real_R[x:(x + th), y:(y + tw)]
-        img_real_L_ir_pattern = img_real_L_ir_pattern[x:(x + th), y:(y + tw)]
-        img_real_R_ir_pattern = img_real_R_ir_pattern[x:(x + th), y:(y + tw)]
+        img_real_L_ir_pattern1 = img_real_L_ir_pattern1[x:(x + th), y:(y + tw)]
+        img_real_R_ir_pattern1 = img_real_R_ir_pattern1[x:(x + th), y:(y + tw)]
+        img_real_L_ir_pattern2 = img_real_L_ir_pattern2[x:(x + th), y:(y + tw)]
+        img_real_R_ir_pattern2 = img_real_R_ir_pattern2[x:(x + th), y:(y + tw)]
 
         # Get data augmentation
         custom_augmentation = __data_augmentation__(gaussian_blur=self.gaussian_blur, color_jitter=self.color_jitter)
@@ -233,12 +243,16 @@ class MessytableDataset(Dataset):
         item = {}
         item['img_L'] = custom_augmentation(img_L_rgb).type(torch.FloatTensor)
         item['img_R'] = custom_augmentation(img_R_rgb).type(torch.FloatTensor)
-        item['img_L_ir_pattern'] = torch.tensor(img_L_ir_pattern, dtype=torch.float32).unsqueeze(0)
-        item['img_R_ir_pattern'] = torch.tensor(img_R_ir_pattern, dtype=torch.float32).unsqueeze(0)
+        item['img_L_ir_pattern1'] = torch.tensor(img_L_ir_pattern1, dtype=torch.float32).unsqueeze(0)
+        item['img_R_ir_pattern1'] = torch.tensor(img_R_ir_pattern1, dtype=torch.float32).unsqueeze(0)
+        item['img_L_ir_pattern2'] = torch.tensor(img_L_ir_pattern2, dtype=torch.float32).unsqueeze(0)
+        item['img_R_ir_pattern2'] = torch.tensor(img_R_ir_pattern2, dtype=torch.float32).unsqueeze(0)
         item['img_real_L'] = normalization(img_real_L).type(torch.FloatTensor)
         item['img_real_R'] = normalization(img_real_R).type(torch.FloatTensor)
-        item['img_real_L_ir_pattern'] = torch.tensor(img_real_L_ir_pattern, dtype=torch.float32).unsqueeze(0)
-        item['img_real_R_ir_pattern'] = torch.tensor(img_real_R_ir_pattern, dtype=torch.float32).unsqueeze(0)
+        item['img_real_L_ir_pattern1'] = torch.tensor(img_real_L_ir_pattern1, dtype=torch.float32).unsqueeze(0)
+        item['img_real_R_ir_pattern1'] = torch.tensor(img_real_R_ir_pattern1, dtype=torch.float32).unsqueeze(0)
+        item['img_real_L_ir_pattern2'] = torch.tensor(img_real_L_ir_pattern2, dtype=torch.float32).unsqueeze(0)
+        item['img_real_R_ir_pattern2'] = torch.tensor(img_real_R_ir_pattern2, dtype=torch.float32).unsqueeze(0)
         item['img_disp_l'] = torch.tensor(img_disp_l, dtype=torch.float32).unsqueeze(0)  # [bs, 1, H, W] in dataloader
         item['img_depth_l'] = torch.tensor(img_depth_l, dtype=torch.float32).unsqueeze(0)  # [bs, 1, H, W]
         item['img_disp_r'] = torch.tensor(img_disp_r, dtype=torch.float32).unsqueeze(0)  # [bs, 1, H, W]
@@ -258,5 +272,5 @@ if __name__ == '__main__':
     print(item['img_disp_l'].shape)
     print(item['prefix'])
     print(item['img_real_L'].shape)
-    print(item['img_L_ir_pattern'].shape)
-    print(item['img_real_L_ir_pattern'].shape)
+    print(item['img_L_ir_pattern1'].shape)
+    print(item['img_real_L_ir_pattern1'].shape)
