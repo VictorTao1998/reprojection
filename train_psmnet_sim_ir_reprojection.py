@@ -211,7 +211,7 @@ def train_sample(sample, transformer_model, psmnet_model,
     # Save reprojection outputs and images
     img_output_reproj = {
         'sim_reprojection': {
-            'target': img_L_ir_pattern1, 'warped': sim_ir_warped, 'pred_disp': sim_pred_disp, 'mask': sim_ir_reproj_mask
+            'target': img_L_ir_pattern, 'warped': sim_ir_warped, 'pred_disp': sim_pred_disp, 'mask': sim_ir_reproj_mask
         },
     }
 
