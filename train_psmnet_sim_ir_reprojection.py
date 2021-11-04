@@ -263,7 +263,9 @@ if __name__ == '__main__':
                                                    shuffle=False, num_workers=cfg.SOLVER.NUM_WORKER, drop_last=False)
 
     # Create Transformer model
+    #print('start')
     transformer_model = Transformer().to(cuda_device)
+    #print('end')
     transformer_optimizer = torch.optim.Adam(transformer_model.parameters(), lr=cfg.SOLVER.LR_CASCADE, betas=(0.9, 0.999))
     if is_distributed:
         transformer_model = torch.nn.parallel.DistributedDataParallel(
@@ -279,6 +281,6 @@ if __name__ == '__main__':
             psmnet_model, device_ids=[args.local_rank], output_device=args.local_rank)
     else:
         psmnet_model = torch.nn.DataParallel(psmnet_model)
-
+    
     # Start training
     train(transformer_model, psmnet_model, transformer_optimizer, psmnet_optimizer, TrainImgLoader, ValImgLoader)

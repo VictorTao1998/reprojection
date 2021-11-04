@@ -40,6 +40,7 @@ parser.add_argument('--warp-op', action='store_true',default=True, help='whether
 parser.add_argument('--loss-ratio', type=float, default=0, help='Ratio between loss_psmnet and loss_reprojection')
 parser.add_argument('--gaussian-blur', action='store_true',default=False, help='whether apply gaussian blur')
 parser.add_argument('--color-jitter', action='store_true',default=False, help='whether apply color jitter')
+parser.add_argument('--pattern2', action='store_true',default=False, help='which pattern to use')
 
 args = parser.parse_args()
 cfg.merge_from_file(args.config_file)
@@ -122,12 +123,28 @@ def train_sample(sample, transformer_model, psmnet_model,
     # Load data
     img_L = sample['img_L'].to(cuda_device)  # [bs, 3, H, W]
     img_R = sample['img_R'].to(cuda_device)
-    img_L_ir_pattern = sample['img_L_ir_pattern'].to(cuda_device)  # [bs, 1, H, W]
-    img_R_ir_pattern = sample['img_R_ir_pattern'].to(cuda_device)
+    img_L_ir_pattern1 = sample['img_L_ir_pattern1'].to(cuda_device)  # [bs, 1, H, W]
+    img_R_ir_pattern1 = sample['img_R_ir_pattern1'].to(cuda_device)
+    img_L_ir_pattern2 = sample['img_L_ir_pattern2'].to(cuda_device)  # [bs, 1, H, W]
+    img_R_ir_pattern2 = sample['img_R_ir_pattern2'].to(cuda_device)
     img_real_L = sample['img_real_L'].to(cuda_device)  # [bs, 3, 2H, 2W]
     img_real_R = sample['img_real_R'].to(cuda_device)  # [bs, 3, 2H, 2W]
-    img_real_L_ir_pattern = sample['img_real_L_ir_pattern'].to(cuda_device)
-    img_real_R_ir_pattern = sample['img_real_R_ir_pattern'].to(cuda_device)
+    img_real_L_ir_pattern1 = sample['img_real_L_ir_pattern1'].to(cuda_device)
+    img_real_R_ir_pattern1 = sample['img_real_R_ir_pattern1'].to(cuda_device)
+    img_real_L_ir_pattern2 = sample['img_real_L_ir_pattern2'].to(cuda_device)
+    img_real_R_ir_pattern2 = sample['img_real_R_ir_pattern2'].to(cuda_device)
+
+    if args.pattern2:
+        img_L_ir_pattern = img_L_ir_pattern2
+        img_R_ir_pattern = img_R_ir_pattern2
+        img_real_L_ir_pattern = img_real_L_ir_pattern2
+        img_real_R_ir_pattern = img_real_R_ir_pattern2
+    else:
+        #print('use pattern 1')
+        img_L_ir_pattern = img_L_ir_pattern1
+        img_R_ir_pattern = img_R_ir_pattern1
+        img_real_L_ir_pattern = img_real_L_ir_pattern1
+        img_real_R_ir_pattern = img_real_R_ir_pattern1
 
     # Get reprojection loss on real
     img_L_transformed, img_R_transformed, img_real_L_transformed, img_real_R_transformed \
