@@ -152,7 +152,7 @@ def train_sample(sample, transformer_model, psmnet_model,
         img_real_L_ir_pattern = img_real_L_ir_pattern2
         img_real_R_ir_pattern = img_real_R_ir_pattern2
     else:
-        print('use pattern 1')
+        #print('use pattern 1')
         img_L_ir_pattern = img_L_ir_pattern1
         img_R_ir_pattern = img_R_ir_pattern1
         img_real_L_ir_pattern = img_real_L_ir_pattern1
@@ -199,7 +199,7 @@ def train_sample(sample, transformer_model, psmnet_model,
     sim_ir_reproj_loss, sim_ir_warped, sim_ir_reproj_mask = get_reprojection_error_old(img_L_ir_pattern, img_R_ir_pattern, sim_pred_disp, mask)
 
     # Backward on sim_ir_pattern reprojection
-    print(args.loss_ratio)
+    #print(args.loss_ratio)
     sim_loss = loss_psmnet * args.loss_ratio + sim_ir_reproj_loss
     if isTrain:
         transformer_optimizer.zero_grad()
