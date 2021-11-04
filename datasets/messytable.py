@@ -158,8 +158,8 @@ class MessytableDataset(Dataset):
         img_R_no_ir = np.array(Image.open(self.img_R_no_ir[idx]).convert(mode='L')) / 255
         # img_L_ir_pattern = __get_ir_pattern__(img_L, img_L_no_ir)  # [H, W]
         # img_R_ir_pattern = __get_ir_pattern__(img_R, img_R_no_ir)
-        img_L_ir_pattern1 = __get_smoothed_ir_pattern__(img_L, img_L_no_ir)  # [H, W]
-        img_R_ir_pattern1 = __get_smoothed_ir_pattern__(img_R, img_R_no_ir)
+        img_L_ir_pattern1 = __get_ir_pattern__(img_L, img_L_no_ir)  # [H, W]
+        img_R_ir_pattern1 = __get_ir_pattern__(img_R, img_R_no_ir)
         img_L_ir_pattern2 = __get_smoothed_ir_pattern2__(img_L, img_L_no_ir)  # [H, W]
         img_R_ir_pattern2 = __get_smoothed_ir_pattern2__(img_R, img_R_no_ir)
         img_L_rgb = np.repeat(img_L[:, :, None], 3, axis=-1)
@@ -192,8 +192,8 @@ class MessytableDataset(Dataset):
         # img_real_L_ir_pattern = __get_ir_pattern__(img_real_L, img_real_L_no_ir, threshold=0.02)  # [H, W]
         # img_real_R_ir_pattern = __get_ir_pattern__(img_real_R, img_real_R_no_ir, threshold=0.02)  # [H, W]
 
-        img_real_L_ir_pattern1 = __get_smoothed_ir_pattern__(img_real_L, img_real_L_no_ir)  # [H, W]
-        img_real_R_ir_pattern1 = __get_smoothed_ir_pattern__(img_real_R, img_real_R_no_ir)  # [H, W]
+        img_real_L_ir_pattern1 = __get_ir_pattern__(img_real_L, img_real_L_no_ir)  # [H, W]
+        img_real_R_ir_pattern1 = __get_ir_pattern__(img_real_R, img_real_R_no_ir)  # [H, W]
         img_real_L_ir_pattern2 = __get_smoothed_ir_pattern2__(img_real_L, img_real_L_no_ir)  # [H, W]
         img_real_R_ir_pattern2 = __get_smoothed_ir_pattern2__(img_real_R, img_real_R_no_ir)  # [H, W]
 
