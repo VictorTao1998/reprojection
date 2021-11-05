@@ -19,7 +19,7 @@ from nets.cycle_gan import CycleGANModel
 from nets.transformer import Transformer
 from utils.cascade_metrics import compute_err_metric
 from utils.warp_ops import apply_disparity_cu
-from utils.reprojection import get_reprojection_error, get_reprojection_error_old
+from utils.reprojection import get_reprojection_error, get_reprojection_error_old, get_reprojection_error_patchwise_test
 from utils.config import cfg
 from utils.reduce import set_random_seed, synchronize, AverageMeterDict, \
     tensor2float, tensor2numpy, reduce_scalar_outputs, make_nograd_func
@@ -109,17 +109,18 @@ def train_sample(sample, summary_writer, global_step, isTrain=True):
         mask = (mask != 0)
         mask[:,:,hp:hp+s, wp:wp+s] = True
     # Get reprojection loss on real
+        for m in range(1, s):
 
-        for d in range(192):
-            disp = torch.ones_like(img_real_L_ir_pattern1)*d
-            real_ir_reproj_loss1, _, _ = get_reprojection_error_old(img_real_L_ir_pattern1, img_real_R_ir_pattern1, disp, mask)
-            real_ir_reproj_loss2, _, _ = get_reprojection_error_old(img_real_L_ir_pattern2, img_real_R_ir_pattern2, disp, mask)
-            summary_writer.add_scalars('./pattern1/reprojection_loss1_size_' + str(s), {
-                                            'pattern1': real_ir_reproj_loss1
-                                        }, d)
-            summary_writer.add_scalars('./pattern2/reprojection_loss1_size_' + str(s), {
-                                            'pattern2': real_ir_reproj_loss2
-                                        }, d)
+            for d in range(192):
+                disp = torch.ones_like(img_real_L_ir_pattern1)*d
+                real_ir_reproj_loss1, _, _ = get_reprojection_error_patchwise_test(img_real_L_ir_pattern1, img_real_R_ir_pattern1, disp, mask, patch_size_avg=s, patch_size_max=m)
+                real_ir_reproj_loss2, _, _ = get_reprojection_error_patchwise_test(img_real_L_ir_pattern2, img_real_R_ir_pattern2, disp, mask, patch_size_avg=s, patch_size_max=m)
+                #summary_writer.add_scalars('./pattern1/reprojection_loss1_a_' + str(s), {
+                #                                'pattern1': real_ir_reproj_loss1
+                #                            }, d)
+                summary_writer.add_scalars('./pattern2/reprojection_loss1_a_' + str(s) + 'm_'+str(m), {
+                                                'pattern2': real_ir_reproj_loss2
+                                            }, d)
     save_images_grid(summary_writer, 'train_reproj', {'real reprojection' :{'pattern1': img_real_L_ir_pattern1,
                                                 'pattern2': img_real_L_ir_pattern2}}, global_step)
 
