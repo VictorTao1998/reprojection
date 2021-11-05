@@ -209,7 +209,7 @@ def main():
     # Tensorboard and logger
     os.makedirs(args.output, exist_ok=True)
     log_dir = os.path.join(args.output, f'{get_time_string()}_{args.annotate}')
-    print(log_dir)
+    print('whereis ' + log_dir)
     os.mkdir(log_dir)
     logger = setup_logger("Reprojection-PSMNet Testing", distributed_rank=0, save_dir=log_dir)
     logger.info(f'Annotation: {args.annotate}')
