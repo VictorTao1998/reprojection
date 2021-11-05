@@ -91,7 +91,7 @@ def train(transformer_model, psmnet_model, transformer_optimizer, psmnet_optimiz
             scalar_outputs_reproj, img_output_reproj = \
                 train_sample(sample, transformer_model, psmnet_model, transformer_optimizer,
                              psmnet_optimizer, isTrain=True)
-            logger.info(f'Epoch {epoch_idx} Step {batch_idx}/{len(TrainImgLoader)} train psmnet: {scalar_outputs_reproj}')
+            #logger.info(f'Epoch {epoch_idx} Step {batch_idx}/{len(TrainImgLoader)} train psmnet: {scalar_outputs_reproj}')
             # Save result to tensorboard
             if (not is_distributed) or (dist.get_rank() == 0):
                 if do_summary:
