@@ -18,7 +18,7 @@ from nets.cycle_gan import CycleGANModel
 from nets.transformer import Transformer
 from utils.cascade_metrics import compute_err_metric
 from utils.warp_ops import apply_disparity_cu
-from utils.reprojection import get_reprojection_error, get_reprojection_error_old
+from utils.reprojection import get_reprojection_error, get_reprojection_error_old, get_reprojection_error_patchwise
 from utils.config import cfg
 from utils.reduce import set_random_seed, synchronize, AverageMeterDict, \
     tensor2float, tensor2numpy, reduce_scalar_outputs, make_nograd_func
@@ -41,6 +41,7 @@ parser.add_argument('--loss-ratio', type=float, default=0, help='Ratio between l
 parser.add_argument('--gaussian-blur', action='store_true',default=False, help='whether apply gaussian blur')
 parser.add_argument('--color-jitter', action='store_true',default=False, help='whether apply color jitter')
 parser.add_argument('--pattern2', action='store_true',default=False, help='which pattern to use')
+parser.add_argument('--patch_size', type=int, default=30)
 
 args = parser.parse_args()
 cfg.merge_from_file(args.config_file)
@@ -90,6 +91,7 @@ def train(transformer_model, psmnet_model, transformer_optimizer, psmnet_optimiz
             scalar_outputs_reproj, img_output_reproj = \
                 train_sample(sample, transformer_model, psmnet_model, transformer_optimizer,
                              psmnet_optimizer, isTrain=True)
+            logger.info(f'Epoch {epoch_idx} Step {batch_idx}/{len(TrainImgLoader)} train psmnet: {scalar_outputs_reproj}')
             # Save result to tensorboard
             if (not is_distributed) or (dist.get_rank() == 0):
                 if do_summary:
@@ -146,6 +148,7 @@ def train_sample(sample, transformer_model, psmnet_model,
         img_real_L_ir_pattern = img_real_L_ir_pattern1
         img_real_R_ir_pattern = img_real_R_ir_pattern1
 
+    #print(img_real_L.shape)
     # Get reprojection loss on real
     img_L_transformed, img_R_transformed, img_real_L_transformed, img_real_R_transformed \
         = transformer_model(img_L, img_R, img_real_L, img_real_R)  # [bs, 3, H, W]
@@ -155,7 +158,7 @@ def train_sample(sample, transformer_model, psmnet_model,
     else:
         with torch.no_grad():
             real_pred_disp = psmnet_model(img_real_L, img_real_R, img_real_L_transformed, img_real_R_transformed)
-    real_ir_reproj_loss, real_ir_warped, real_ir_reproj_mask = get_reprojection_error_old(img_real_L_ir_pattern, img_real_R_ir_pattern, real_pred_disp)
+    real_ir_reproj_loss, real_ir_warped, real_ir_reproj_mask = get_reprojection_error_patchwise(img_real_L_ir_pattern, img_real_R_ir_pattern, real_pred_disp, patch_size=args.patch_size)
 
     # Backward on real
     real_loss = real_ir_reproj_loss
