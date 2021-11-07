@@ -197,8 +197,8 @@ class MessytableDataset(Dataset):
         img_real_L_ir_pattern2 = __get_smoothed_ir_pattern2__(img_real_L, img_real_L_no_ir)  # [H, W]
         img_real_R_ir_pattern2 = __get_smoothed_ir_pattern2__(img_real_R, img_real_R_no_ir)  # [H, W]
 
-        img_real_L = np.repeat(img_real_L[:, :, None], 3, axis=-1)
-        img_real_R = np.repeat(img_real_R[:, :, None], 3, axis=-1)
+        #img_real_L = np.repeat(img_real_L[:, :, None], 3, axis=-1)
+        #img_real_R = np.repeat(img_real_R[:, :, None], 3, axis=-1)
 
         # Convert depth map to disparity map
         extrinsic_l = img_meta['extrinsic_l']
