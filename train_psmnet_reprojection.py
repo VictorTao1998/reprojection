@@ -140,8 +140,6 @@ def train_sample(sample, transformer_model, psmnet_model,
     # Load data
     img_L = sample['img_L'].to(cuda_device)  # [bs, 3, H, W]
     img_R = sample['img_R'].to(cuda_device)
-    img_L_ir_pattern = sample['img_L_ir_pattern'].to(cuda_device)  # [bs, 1, H, W]
-    img_R_ir_pattern = sample['img_R_ir_pattern'].to(cuda_device)
     img_real_L = sample['img_real_L'].to(cuda_device)  # [bs, 3, 2H, 2W]
     img_real_R = sample['img_real_R'].to(cuda_device)  # [bs, 3, 2H, 2W]
 
