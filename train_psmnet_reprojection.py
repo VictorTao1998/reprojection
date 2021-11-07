@@ -222,10 +222,10 @@ def train_sample(sample, transformer_model, psmnet_model,
     # Save reprojection outputs and images
     img_output_reproj = {
         'sim_reprojection': {
-            'target': img_L, 'pred_disp': sim_pred_disp.repeat(1, 3, 1, 1)
+            'target': img_L, 'pred_disp': sim_pred_disp
         },
         'real_reprojection': {
-            'target': img_real_L, 'pred_disp': real_pred_disp.repeat(1, 3, 1, 1)
+            'target': img_real_L, 'pred_disp': real_pred_disp
         }
     }
     """
