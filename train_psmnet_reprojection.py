@@ -185,6 +185,7 @@ def train_sample(sample, transformer_model, psmnet_model,
     #sim_img_reproj_loss, sim_img_warped, sim_img_reproj_mask = get_reprojection_error_old(img_L, img_R, sim_pred_disp, mask)
     data_batch_sim = {'img_L': img_L, 'img_R': img_R}
     preds_sim = {'refined_disp': sim_pred_disp}
+    print(img_L.shape, img_R.shape)
     sim_img_reproj_loss = loss_fn(preds_sim, data_batch_sim)['rec_loss']
 
     # Backward on sim image reprojection
