@@ -291,7 +291,7 @@ if __name__ == '__main__':
                                                    shuffle=False, num_workers=cfg.SOLVER.NUM_WORKER, drop_last=False)
 
     # Create Transformer model
-    transformer_model = Transformer().to(cuda_device)
+    transformer_model = Transformer(inplanes=1).to(cuda_device)
     transformer_optimizer = torch.optim.Adam(transformer_model.parameters(), lr=cfg.SOLVER.LR_CASCADE, betas=(0.9, 0.999))
     if is_distributed:
         transformer_model = torch.nn.parallel.DistributedDataParallel(
