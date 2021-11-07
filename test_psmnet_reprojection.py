@@ -219,7 +219,7 @@ def main():
 
     # Get cascade model
     logger.info(f'Loaded the checkpoint: {args.model}')
-    transformer_model = Transformer(inplane=1).to(cuda_device)
+    transformer_model = Transformer(inplanes=1).to(cuda_device)
     psmnet_model = PSMNet(maxdisp=cfg.ARGS.MAX_DISP).to(cuda_device)
     transformer_model_dict = load_from_dataparallel_model(args.model, 'Transformer')
     transformer_model.load_state_dict(transformer_model_dict)
