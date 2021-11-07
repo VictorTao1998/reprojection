@@ -152,8 +152,8 @@ class MessytableDataset(Dataset):
         return len(self.img_L)
 
     def __getitem__(self, idx):
-        img_L_rgb = np.array(Image.open(self.img_L[idx]).convert(mode='L')) / 255  # [H, W]
-        img_R_rgb = np.array(Image.open(self.img_R[idx]).convert(mode='L')) / 255
+        img_L = np.array(Image.open(self.img_L[idx]).convert(mode='L')) / 255  # [H, W]
+        img_R = np.array(Image.open(self.img_R[idx]).convert(mode='L')) / 255
         img_L_no_ir = np.array(Image.open(self.img_L_no_ir[idx]).convert(mode='L')) / 255
         img_R_no_ir = np.array(Image.open(self.img_R_no_ir[idx]).convert(mode='L')) / 255
         # img_L_ir_pattern = __get_ir_pattern__(img_L, img_L_no_ir)  # [H, W]
@@ -162,8 +162,8 @@ class MessytableDataset(Dataset):
         img_R_ir_pattern1 = __get_ir_pattern__(img_R, img_R_no_ir, threshold=0.01)
         img_L_ir_pattern2 = __get_smoothed_ir_pattern2__(img_L, img_L_no_ir)  # [H, W]
         img_R_ir_pattern2 = __get_smoothed_ir_pattern2__(img_R, img_R_no_ir)
-        #img_L_rgb = np.repeat(img_L[:, :, None], 3, axis=-1)
-        #img_R_rgb = np.repeat(img_R[:, :, None], 3, axis=-1)
+        #img_L = np.repeat(img_L[:, :, None], 3, axis=-1)
+        #img_R = np.repeat(img_R[:, :, None], 3, axis=-1)
 
         img_depth_l = np.array(Image.open(self.img_depth_l[idx])) / 1000  # convert from mm to m
         img_depth_r = np.array(Image.open(self.img_depth_r[idx])) / 1000  # convert from mm to m
@@ -215,12 +215,12 @@ class MessytableDataset(Dataset):
         img_disp_r[mask] = focal_length * baseline / img_depth_r[mask]
 
         # random crop the image to CROP_HEIGHT * CROP_WIDTH
-        h, w = img_L_rgb.shape[:2]
+        h, w = img_L.shape[:2]
         th, tw = cfg.ARGS.CROP_HEIGHT, cfg.ARGS.CROP_WIDTH
         x = random.randint(0, h - th)
         y = random.randint(0, w - tw)
-        img_L_rgb = img_L_rgb[x:(x + th), y:(y + tw)]
-        img_R_rgb = img_R_rgb[x:(x + th), y:(y + tw)]
+        img_L = img_L[x:(x + th), y:(y + tw)]
+        img_R = img_R[x:(x + th), y:(y + tw)]
         img_L_ir_pattern1 = img_L_ir_pattern1[x:(x + th), y:(y + tw)]
         img_R_ir_pattern1 = img_R_ir_pattern1[x:(x + th), y:(y + tw)]
         img_L_ir_pattern2 = img_L_ir_pattern2[x:(x + th), y:(y + tw)]
@@ -241,8 +241,8 @@ class MessytableDataset(Dataset):
         normalization = __data_augmentation__(gaussian_blur=False, color_jitter=False)
 
         item = {}
-        item['img_L'] = custom_augmentation(img_L_rgb).type(torch.FloatTensor)
-        item['img_R'] = custom_augmentation(img_R_rgb).type(torch.FloatTensor)
+        item['img_L'] = custom_augmentation(img_L).type(torch.FloatTensor)
+        item['img_R'] = custom_augmentation(img_R).type(torch.FloatTensor)
         item['img_L_ir_pattern1'] = torch.tensor(img_L_ir_pattern1, dtype=torch.float32).unsqueeze(0)
         item['img_R_ir_pattern1'] = torch.tensor(img_R_ir_pattern1, dtype=torch.float32).unsqueeze(0)
         item['img_L_ir_pattern2'] = torch.tensor(img_L_ir_pattern2, dtype=torch.float32).unsqueeze(0)
