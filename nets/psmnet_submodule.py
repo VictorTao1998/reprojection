@@ -95,7 +95,7 @@ class FeatureExtraction(nn.Module):
         self.inplanes = 32
         # conv0_1, conv0_2, conv0_3
         self.firstconv = nn.Sequential(
-            convbn(6, 32, 3, 2, 1, 1),
+            convbn(4, 32, 3, 2, 1, 1),
             nn.ReLU(inplace=True),
             convbn(32, 32, 3, 1, 1, 1),
             nn.ReLU(inplace=True),
