@@ -152,8 +152,8 @@ class MessytableDataset(Dataset):
         return len(self.img_L)
 
     def __getitem__(self, idx):
-        img_L = np.array(Image.open(self.img_L[idx]).convert(mode='L')) / 255  # [H, W]
-        img_R = np.array(Image.open(self.img_R[idx]).convert(mode='L')) / 255
+        img_L_rgb = np.array(Image.open(self.img_L[idx]).convert(mode='L')) / 255  # [H, W]
+        img_R_rgb = np.array(Image.open(self.img_R[idx]).convert(mode='L')) / 255
         img_L_no_ir = np.array(Image.open(self.img_L_no_ir[idx]).convert(mode='L')) / 255
         img_R_no_ir = np.array(Image.open(self.img_R_no_ir[idx]).convert(mode='L')) / 255
         # img_L_ir_pattern = __get_ir_pattern__(img_L, img_L_no_ir)  # [H, W]
