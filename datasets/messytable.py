@@ -162,8 +162,8 @@ class MessytableDataset(Dataset):
         img_R_ir_pattern1 = __get_ir_pattern__(img_R, img_R_no_ir, threshold=0.01)
         img_L_ir_pattern2 = __get_smoothed_ir_pattern2__(img_L, img_L_no_ir)  # [H, W]
         img_R_ir_pattern2 = __get_smoothed_ir_pattern2__(img_R, img_R_no_ir)
-        img_L_rgb = np.repeat(img_L[:, :, None], 3, axis=-1)
-        img_R_rgb = np.repeat(img_R[:, :, None], 3, axis=-1)
+        #img_L_rgb = np.repeat(img_L[:, :, None], 3, axis=-1)
+        #img_R_rgb = np.repeat(img_R[:, :, None], 3, axis=-1)
 
         img_depth_l = np.array(Image.open(self.img_depth_l[idx])) / 1000  # convert from mm to m
         img_depth_r = np.array(Image.open(self.img_depth_r[idx])) / 1000  # convert from mm to m
