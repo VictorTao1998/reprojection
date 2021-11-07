@@ -24,6 +24,7 @@ from utils.reduce import set_random_seed, synchronize, AverageMeterDict, \
     tensor2float, tensor2numpy, reduce_scalar_outputs, make_nograd_func
 from utils.util import setup_logger, weights_init, \
     adjust_learning_rate, save_scalars, save_scalars_graph, save_images, save_images_grid, disp_error_img
+from utils.loss_functions import Windowed_Matching_Loss
 
 cudnn.benchmark = True
 
@@ -342,6 +343,6 @@ if __name__ == '__main__':
             psmnet_model, device_ids=[args.local_rank], output_device=args.local_rank)
     else:
         psmnet_model = torch.nn.DataParallel(psmnet_model)
-
+    Windowed_Matching_Loss
     # Start training
     train(transformer_model, psmnet_model, transformer_optimizer, psmnet_optimizer, TrainImgLoader, ValImgLoader)

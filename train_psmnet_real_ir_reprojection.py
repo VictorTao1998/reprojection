@@ -24,6 +24,7 @@ from utils.reduce import set_random_seed, synchronize, AverageMeterDict, \
     tensor2float, tensor2numpy, reduce_scalar_outputs, make_nograd_func
 from utils.util import setup_logger, weights_init, \
     adjust_learning_rate, save_scalars, save_scalars_graph, save_images, save_images_grid, disp_error_img
+from utils.loss_functions import Windowed_Matching_Loss
 
 cudnn.benchmark = True
 
@@ -42,6 +43,11 @@ parser.add_argument('--gaussian-blur', action='store_true',default=False, help='
 parser.add_argument('--color-jitter', action='store_true',default=False, help='whether apply color jitter')
 parser.add_argument('--pattern2', action='store_true',default=False, help='which pattern to use')
 parser.add_argument('--patch_size', type=int, default=30)
+parser.add_argument('--LCN_KERNEL_SIZE', type=int, default=9)
+parser.add_argument('--WINDOW_SIZE', type=int, default=33)
+parser.add_argument('--SIGMA_WEIGHT', type=float, default=2.0)       
+parser.add_argument('--INVALID_REG_WEIGHT', type=float, default=1.0)       
+parser.add_argument('--INVALID_WEIGHT', type=float, default=1.0)      
 
 args = parser.parse_args()
 cfg.merge_from_file(args.config_file)
@@ -73,7 +79,7 @@ logger.info(f'Running with {num_gpus} GPUs')
 
 
 def train(transformer_model, psmnet_model, transformer_optimizer, psmnet_optimizer,
-          TrainImgLoader, ValImgLoader):
+          TrainImgLoader, ValImgLoader, loss_fn):
 
     for epoch_idx in range(cfg.SOLVER.EPOCHS):
         # One epoch training loop
@@ -90,12 +96,13 @@ def train(transformer_model, psmnet_model, transformer_optimizer, psmnet_optimiz
             # Train one sample
             scalar_outputs_reproj, img_output_reproj = \
                 train_sample(sample, transformer_model, psmnet_model, transformer_optimizer,
-                             psmnet_optimizer, isTrain=True)
-            #logger.info(f'Epoch {epoch_idx} Step {batch_idx}/{len(TrainImgLoader)} train psmnet: {scalar_outputs_reproj}')
+                             psmnet_optimizer, loss_fn, isTrain=True)
+            logger.info(f'Epoch {epoch_idx} Step {batch_idx}/{len(TrainImgLoader)} train psmnet: {scalar_outputs_reproj}')
             # Save result to tensorboard
             if (not is_distributed) or (dist.get_rank() == 0):
                 if do_summary:
                     # Update reprojection images
+                    #logger.info(f'Epoch {epoch_idx} Step {batch_idx}/{len(TrainImgLoader)} train psmnet: {scalar_outputs_reproj}')
                     save_images_grid(summary_writer, 'train_reproj', img_output_reproj, global_step, nrow=4)
                     save_scalars(summary_writer, 'train_reproj', scalar_outputs_reproj, global_step)
 
@@ -114,7 +121,7 @@ def train(transformer_model, psmnet_model, transformer_optimizer, psmnet_optimiz
 
 
 def train_sample(sample, transformer_model, psmnet_model,
-                 transformer_optimizer, psmnet_optimizer, isTrain=True):
+                 transformer_optimizer, psmnet_optimizer, loss_fn, isTrain=True):
     if isTrain:
         transformer_model.train()
         psmnet_model.train()
@@ -158,7 +165,10 @@ def train_sample(sample, transformer_model, psmnet_model,
     else:
         with torch.no_grad():
             real_pred_disp = psmnet_model(img_real_L, img_real_R, img_real_L_transformed, img_real_R_transformed)
-    real_ir_reproj_loss, real_ir_warped, real_ir_reproj_mask = get_reprojection_error_patchwise(img_real_L_ir_pattern, img_real_R_ir_pattern, real_pred_disp, patch_size=args.patch_size)
+    #real_ir_reproj_loss, real_ir_warped, real_ir_reproj_mask = get_reprojection_error_patchwise(img_real_L_ir_pattern, img_real_R_ir_pattern, real_pred_disp, patch_size=args.patch_size)
+    data_batch = {'img_L': img_real_L_ir_pattern, 'img_R': img_real_R_ir_pattern}
+    preds = {'refined_disp': real_pred_disp}
+    real_ir_reproj_loss = loss_fn(preds, data_batch)['rec_loss']
 
     # Backward on real
     real_loss = real_ir_reproj_loss
@@ -172,7 +182,7 @@ def train_sample(sample, transformer_model, psmnet_model,
     # Save reprojection outputs and images
     img_output_reproj = {
         'real_reprojection': {
-            'target': img_real_L_ir_pattern, 'warped': real_ir_warped, 'pred_disp': real_pred_disp, 'mask': real_ir_reproj_mask
+            'target': img_real_L_ir_pattern, 'pred_disp': real_pred_disp
         }
     }
     scalar_outputs_reproj = {'real_reproj_loss': real_ir_reproj_loss.item()}
@@ -223,5 +233,13 @@ if __name__ == '__main__':
     else:
         psmnet_model = torch.nn.DataParallel(psmnet_model)
 
+    loss_fn = Windowed_Matching_Loss(
+        lcn_kernel_size=args.LCN_KERNEL_SIZE,
+        window_size=args.WINDOW_SIZE,
+        sigma_weight=args.SIGMA_WEIGHT,
+        invalid_reg_weight=args.INVALID_REG_WEIGHT,
+        invalid_weight=args.INVALID_WEIGHT
+    )
+
     # Start training
-    train(transformer_model, psmnet_model, transformer_optimizer, psmnet_optimizer, TrainImgLoader, ValImgLoader)
+    train(transformer_model, psmnet_model, transformer_optimizer, psmnet_optimizer, TrainImgLoader, ValImgLoader, loss_fn)

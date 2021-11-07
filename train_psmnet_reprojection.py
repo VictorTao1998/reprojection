@@ -23,6 +23,7 @@ from utils.reduce import set_random_seed, synchronize, AverageMeterDict, \
     tensor2float, tensor2numpy, reduce_scalar_outputs, make_nograd_func
 from utils.util import setup_logger, weights_init, \
     adjust_learning_rate, save_scalars, save_scalars_graph, save_images, save_images_grid, disp_error_img
+from utils.loss_functions import Windowed_Matching_Loss
 
 cudnn.benchmark = True
 
@@ -39,6 +40,12 @@ parser.add_argument('--warp-op', action='store_true',default=True, help='whether
 parser.add_argument('--loss-ratio', type=float, default=1, help='Ratio between loss_G and loss_cascade')
 parser.add_argument('--gaussian-blur', action='store_true',default=False, help='whether apply gaussian blur')
 parser.add_argument('--color-jitter', action='store_true',default=False, help='whether apply color jitter')
+
+parser.add_argument('--LCN_KERNEL_SIZE', type=int, default=9)
+parser.add_argument('--WINDOW_SIZE', type=int, default=33)
+parser.add_argument('--SIGMA_WEIGHT', type=float, default=2.0)       
+parser.add_argument('--INVALID_REG_WEIGHT', type=float, default=1.0)       
+parser.add_argument('--INVALID_WEIGHT', type=float, default=1.0)      
 
 args = parser.parse_args()
 cfg.merge_from_file(args.config_file)
@@ -70,7 +77,7 @@ logger.info(f'Running with {num_gpus} GPUs')
 # python -m torch.distributed.launch train_psmnet_reprojection.py --config-file configs/remote_train_primitive_steps.yaml --summary-freq 10 --save-freq 100 --logdir ../train_10_14_psmnet_reprojection/debug --debug
 
 def train(transformer_model, psmnet_model, transformer_optimizer, psmnet_optimizer,
-          TrainImgLoader, ValImgLoader):
+          TrainImgLoader, ValImgLoader, loss_fn):
 
     for epoch_idx in range(cfg.SOLVER.EPOCHS):
         # One epoch training loop
@@ -88,7 +95,7 @@ def train(transformer_model, psmnet_model, transformer_optimizer, psmnet_optimiz
             # Train one sample
             scalar_outputs_psmnet, img_outputs_psmnet, img_output_reproj = \
                 train_sample(sample, transformer_model, psmnet_model, transformer_optimizer,
-                             psmnet_optimizer, isTrain=True)
+                             psmnet_optimizer, loss_fn, isTrain=True)
             # Save result to tensorboard
             if (not is_distributed) or (dist.get_rank() == 0):
                 scalar_outputs_psmnet = tensor2float(scalar_outputs_psmnet)
@@ -122,7 +129,7 @@ def train(transformer_model, psmnet_model, transformer_optimizer, psmnet_optimiz
 
 
 def train_sample(sample, transformer_model, psmnet_model,
-                 transformer_optimizer, psmnet_optimizer, isTrain=True):
+                 transformer_optimizer, psmnet_optimizer, loss_fn, isTrain=True):
     if isTrain:
         transformer_model.train()
         psmnet_model.train()
@@ -177,7 +184,10 @@ def train_sample(sample, transformer_model, psmnet_model,
             loss_psmnet = F.smooth_l1_loss(pred_disp[mask], disp_gt[mask], reduction='mean')
 
     # Get reprojection loss on sim image
-    sim_img_reproj_loss, sim_img_warped, sim_img_reproj_mask = get_reprojection_error_old(img_L, img_R, sim_pred_disp, mask)
+    #sim_img_reproj_loss, sim_img_warped, sim_img_reproj_mask = get_reprojection_error_old(img_L, img_R, sim_pred_disp, mask)
+    data_batch_sim = {'img_L': img_L, 'img_R': img_R}
+    preds_sim = {'refined_disp': sim_pred_disp}
+    sim_img_reproj_loss = loss_fn(preds_sim, data_batch_sim)['rec_loss']
 
     # Backward on sim image reprojection
     sim_loss = loss_psmnet * args.loss_ratio + sim_img_reproj_loss
@@ -197,7 +207,10 @@ def train_sample(sample, transformer_model, psmnet_model,
     else:
         with torch.no_grad():
             real_pred_disp = psmnet_model(img_real_L, img_real_R, img_real_L_transformed, img_real_R_transformed)
-    real_img_reproj_loss, real_img_warped, real_img_reproj_mask = get_reprojection_error_old(img_real_L, img_real_R, real_pred_disp)
+    #real_img_reproj_loss, real_img_warped, real_img_reproj_mask = get_reprojection_error_old(img_real_L, img_real_R, real_pred_disp)
+    data_batch_real = {'img_L': img_real_L, 'img_R': img_real_R}
+    preds_real = {'refined_disp': real_pred_disp}
+    real_img_reproj_loss = loss_fn(preds_real, data_batch_real)['rec_loss']
 
     # Backward on real
     if isTrain:
@@ -210,12 +223,22 @@ def train_sample(sample, transformer_model, psmnet_model,
     # Save reprojection outputs and images
     img_output_reproj = {
         'sim_reprojection': {
+            'target': img_L, 'pred_disp': sim_pred_disp.repeat(1, 3, 1, 1)
+        },
+        'real_reprojection': {
+            'target': img_real_L, 'pred_disp': real_pred_disp.repeat(1, 3, 1, 1)
+        }
+    }
+    """
+    img_output_reproj = {
+        'sim_reprojection': {
             'target': img_L, 'warped': sim_img_warped, 'pred_disp': sim_pred_disp.repeat(1, 3, 1, 1), 'mask': sim_img_reproj_mask
         },
         'real_reprojection': {
             'target': img_real_L, 'warped': real_img_warped, 'pred_disp': real_pred_disp.repeat(1, 3, 1, 1), 'mask': real_img_reproj_mask
         }
     }
+    """
 
     # Compute stereo error metrics on sim
     pred_disp = sim_pred_disp
@@ -286,5 +309,12 @@ if __name__ == '__main__':
     else:
         psmnet_model = torch.nn.DataParallel(psmnet_model)
 
+    loss_fn = Windowed_Matching_Loss(
+        lcn_kernel_size=args.LCN_KERNEL_SIZE,
+        window_size=args.WINDOW_SIZE,
+        sigma_weight=args.SIGMA_WEIGHT,
+        invalid_reg_weight=args.INVALID_REG_WEIGHT,
+        invalid_weight=args.INVALID_WEIGHT
+    )
     # Start training
-    train(transformer_model, psmnet_model, transformer_optimizer, psmnet_optimizer, TrainImgLoader, ValImgLoader)
+    train(transformer_model, psmnet_model, transformer_optimizer, psmnet_optimizer, TrainImgLoader, ValImgLoader, loss_fn)
