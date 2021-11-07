@@ -49,8 +49,8 @@ def __data_augmentation__(gaussian_blur=False, color_jitter=False):
     # Normalization
     transform_list += [
         Transforms.Normalize(
-            mean=[0.485, 0.456, 0.406],
-            std=[0.229, 0.224, 0.225],
+            mean=[0.5],
+            std=[0.5],
         )
     ]
     custom_augmentation = Transforms.Compose(transform_list)
@@ -134,24 +134,24 @@ class MessytableTestDataset(Dataset):
             img_R_rgb = np.array(img_R_rgb)
             img_L_rgb = img_L_rgb[:, :, None]
             img_R_rgb = img_R_rgb[:, :, None]
-            img_L_rgb = np.repeat(img_L_rgb, 3, axis=-1)
-            img_R_rgb = np.repeat(img_R_rgb, 3, axis=-1)
+            #img_L_rgb = np.repeat(img_L_rgb, 3, axis=-1)
+            #img_R_rgb = np.repeat(img_R_rgb, 3, axis=-1)
 
             img_L_rgb_sim = np.array(Image.open(self.img_L[idx]).convert(mode='L')) / 255
             img_R_rgb_sim = np.array(Image.open(self.img_R[idx]).convert(mode='L')) / 255
-            img_L_rgb_sim = np.repeat(img_L_rgb_sim[:, :, None], 3, axis=-1)
-            img_R_rgb_sim = np.repeat(img_R_rgb_sim[:, :, None], 3, axis=-1)
+            #img_L_rgb_sim = np.repeat(img_L_rgb_sim[:, :, None], 3, axis=-1)
+            #img_R_rgb_sim = np.repeat(img_R_rgb_sim[:, :, None], 3, axis=-1)
             img_depth_realsense = np.array(Image.open(self.img_real_realsense[idx])) / 1000
 
         else:
             img_L_rgb = np.array(Image.open(self.img_L[idx]).convert(mode='L')) / 255
             img_R_rgb = np.array(Image.open(self.img_R[idx]).convert(mode='L')) / 255
-            img_L_rgb = np.repeat(img_L_rgb[:, :, None], 3, axis=-1)
-            img_R_rgb = np.repeat(img_R_rgb[:, :, None], 3, axis=-1)
+            #img_L_rgb = np.repeat(img_L_rgb[:, :, None], 3, axis=-1)
+            #img_R_rgb = np.repeat(img_R_rgb[:, :, None], 3, axis=-1)
             img_L_rgb_real = np.array(Image.open(self.img_L_real[idx]).convert(mode='L'))[:, :, None]
             img_R_rgb_real = np.array(Image.open(self.img_R_real[idx]).convert(mode='L'))[:, :, None]
-            img_L_rgb_real = np.repeat(img_L_rgb_real, 3, axis=-1)
-            img_R_rgb_real = np.repeat(img_R_rgb_real, 3, axis=-1)
+            #img_L_rgb_real = np.repeat(img_L_rgb_real, 3, axis=-1)
+            #img_R_rgb_real = np.repeat(img_R_rgb_real, 3, axis=-1)
             img_depth_realsense = np.array(Image.open(self.img_sim_realsense[idx])) / 1000
 
         img_depth_l = np.array(Image.open(self.img_depth_l[idx])) / 1000  # convert from mm to m
